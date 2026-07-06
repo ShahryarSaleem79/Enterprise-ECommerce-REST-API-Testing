@@ -1,0 +1,48 @@
+name: Enterprise REST API Automation
+
+on:
+  push:
+    branches:
+      - main
+
+  pull_request:
+    branches:
+      - main
+
+  workflow_dispatch:
+
+jobs:
+  api-tests:
+
+    runs-on: ubuntu-latest
+
+    steps:
+
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Install Newman
+        run: |
+          npm install -g newman
+          npm install -g newman-reporter-htmlextra
+
+      - name: Create Reports Folder
+        run: mkdir -p reports
+
+      - name: Run FakeStore API Collection
+        run: |
+          newman run collections/FakeStoreAPI.postman_collection.json \
+          -e environments/QA.postman_environment.json \
+          -r cli,htmlextra \
+          --reporter-htmlextra-export reports/Newman_Report.html
+
+      - name: Upload Newman Report
+        uses: actions/upload-artifact@v4
+        with:
+          name: Newman-HTML-Report
+          path: reports/Newman_Report.html
