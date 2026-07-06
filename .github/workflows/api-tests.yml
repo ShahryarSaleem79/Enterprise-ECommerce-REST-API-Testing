@@ -37,7 +37,7 @@ jobs:
       - name: Run FakeStore API Collection
         run: |
           newman run collections/FakeStoreAPI.postman_collection.json \
-          -e environments/QA.postman_environment.json \
+          -e environments/QA/QA.postman_environment.json \
           -r cli,htmlextra \
           --reporter-htmlextra-export reports/Newman_Report.html
 
