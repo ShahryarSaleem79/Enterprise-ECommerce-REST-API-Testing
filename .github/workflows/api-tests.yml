@@ -38,6 +38,8 @@ jobs:
         run: |
           newman run collections/FakeStoreAPI.postman_collection.json \
           -e environments/QA/QA.postman_environment.json \
+          --env-var "username=${{ secrets.USERNAME }}" \
+          --env-var "password=${{ secrets.PASSWORD }}" \
           -r cli,htmlextra \
           --reporter-htmlextra-export reports/Newman_Report.html
 
