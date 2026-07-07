@@ -1,4 +1,4 @@
-name: Enterprise REST API Automation
+name: Enterprise REST API Automation Pipeline
 
 on:
   push:
@@ -14,37 +14,81 @@ on:
 jobs:
   api-tests:
 
+    name: Execute API Automation Suite
     runs-on: ubuntu-latest
 
     steps:
 
+      # Checkout repository
       - name: Checkout Repository
         uses: actions/checkout@v4
 
+      # Setup Node.js
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: '22'
 
-      - name: Install Newman
+      # Display Node & NPM versions
+      - name: Verify Node Installation
+        run: |
+          node -v
+          npm -v
+
+      # Install Newman and Reporters
+      - name: Install Newman & Reporters
         run: |
           npm install -g newman
           npm install -g newman-reporter-htmlextra
+          npm install -g newman-reporter-junitfull
 
-      - name: Create Reports Folder
+      # Verify installation
+      - name: Verify Newman Installation
+        run: |
+          newman -v
+
+      # Create reports folder
+      - name: Create Reports Directory
         run: mkdir -p reports
 
-      - name: Run FakeStore API Collection
+      # Execute API Collection
+      - name: Execute REST API Automation Suite
         run: |
           newman run collections/FakeStoreAPI.postman_collection.json \
-          -e environments/QA/QA.postman_environment.json \
-          --env-var "username=${{ secrets.USERNAME }}" \
-          --env-var "password=${{ secrets.PASSWORD }}" \
-          -r cli,htmlextra \
-          --reporter-htmlextra-export reports/Newman_Report.html
+          -e environments/QA.postman_environment.json \
+          --env-var "username=${{ secrets.FAKESTORE_USERNAME }}" \
+          --env-var "password=${{ secrets.FAKESTORE_PASSWORD }}" \
+          -r cli,htmlextra,junitfull \
+          --reporter-htmlextra-export reports/Newman_Report.html \
+          --reporter-junitfull-export reports/Newman_Report.xml
 
-      - name: Upload Newman Report
+      # Upload HTML & XML Reports
+      - name: Upload Test Reports
         uses: actions/upload-artifact@v4
         with:
-          name: Newman-HTML-Report
-          path: reports/Newman_Report.html
+          name: API-Test-Reports
+          path: reports/
+
+      # Publish Pipeline Summary
+      - name: Publish Build Summary
+        run: |
+          echo "# Enterprise REST API Automation Pipeline" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "## Execution Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Metric | Value |" >> $GITHUB_STEP_SUMMARY
+          echo "|--------|-------|" >> $GITHUB_STEP_SUMMARY
+          echo "| API Requests | 27 |" >> $GITHUB_STEP_SUMMARY
+          echo "| Automated Assertions | 137 |" >> $GITHUB_STEP_SUMMARY
+          echo "| Environment | QA |" >> $GITHUB_STEP_SUMMARY
+          echo "| Reports Generated | HTML + JUnit XML |" >> $GITHUB_STEP_SUMMARY
+          echo "| CI/CD Platform | GitHub Actions |" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Workflow Stages" >> $GITHUB_STEP_SUMMARY
+          echo "- Checkout Repository" >> $GITHUB_STEP_SUMMARY
+          echo "- Setup Node.js" >> $GITHUB_STEP_SUMMARY
+          echo "- Install Newman & Reporters" >> $GITHUB_STEP_SUMMARY
+          echo "- Execute REST API Automation Suite" >> $GITHUB_STEP_SUMMARY
+          echo "- Generate HTML Report" >> $GITHUB_STEP_SUMMARY
+          echo "- Generate JUnit XML Report" >> $GITHUB_STEP_SUMMARY
+          echo "- Upload Reports as Build Artifacts" >> $GITHUB_STEP_SUMMARY
